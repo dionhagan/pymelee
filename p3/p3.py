@@ -1,4 +1,4 @@
-import os.path
+import os
 import time
 
 import p3.fox
@@ -69,12 +69,16 @@ def main():
     fox = p3.fox.Fox()
 
     try:
-        print('Start dolphin now. Press ^C to stop p3.')
+        print('Starting dolphin now. Press ^C to stop p3.')
+        # open Dolphin via CLI
+        os.system("open ~/Desktop/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")
+        # configure paths
         pad_path = dolphin_dir + '/Pipes/pipe'
         mw_path = dolphin_dir + '/MemoryWatcher/MemoryWatcher'
         with p3.pad.Pad(pad_path) as pad, p3.memory_watcher.MemoryWatcher(mw_path) as mw:
             run(fox, state, sm, mw, pad, stats)
     except KeyboardInterrupt:
+        os.system("osascript -e 'quit app \"Dolphin\"'")
         print('Stopped')
         print(stats)
 

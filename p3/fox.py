@@ -17,11 +17,7 @@ class Fox:
         else:
             # Eventually this will point at some decision-making thing.
             # pseudo: self.action_list = max(score(getSuccessors()))
-            print (state.players)
-            print ('\n')
-            self.pressB(pad)
             self.shorthop_laser(pad)
-            self.pressB(pad, 0.5, 1)
 
     """
         FOX MOVESET
