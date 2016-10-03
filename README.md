@@ -1,4 +1,4 @@
-Credit to spxtr for the Dolphin Emulator I/O template code
+Credit to https://github.com/spxtr/p3 for the Dolphin Emulator I/O template code
 
 [![Test Status](https://travis-ci.org/spxtr/p3.svg)](https://travis-ci.org/spxtr/p3)
 
