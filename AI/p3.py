@@ -12,7 +12,7 @@ import p3.stats
 
 def find_dolphin_dir():
     """Attempts to find the dolphin user directory. None on failure."""
-    candidates = ['~/.dolphin-emu', '~/.local/share/.dolphin-emu']
+    candidates = ['~/Library/Application Support/Dolphin']
     for candidate in candidates:
         path = os.path.expanduser(candidate)
         if os.path.isdir(path):
@@ -70,7 +70,7 @@ def main():
 
     try:
         print('Start dolphin now. Press ^C to stop p3.')
-        pad_path = dolphin_dir + '/Pipes/p3'
+        pad_path = dolphin_dir + '/Pipes/pipe'
         mw_path = dolphin_dir + '/MemoryWatcher/MemoryWatcher'
         with p3.pad.Pad(pad_path) as pad, p3.memory_watcher.MemoryWatcher(mw_path) as mw:
             run(fox, state, sm, mw, pad, stats)

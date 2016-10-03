@@ -10,14 +10,15 @@ class Fox:
             wait, func, args = self.action_list[0]
             if state.frame - self.last_action < wait:
                 return
-            else:
-                self.action_list.pop(0)
-                if func is not None:
-                    func(*args)
-                self.last_action = state.frame
+            self.action_list.pop(0)
+            if func is not None:
+                func(*args)
+            self.last_action = state.frame
         else:
             # Eventually this will point at some decision-making thing.
-            self.shinespam(pad)
+            # self.shinespam(pad)
+            for x in range(10):
+                self.sh_laser(pad)
 
     def shinespam(self, pad):
         self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.0]))
@@ -26,4 +27,13 @@ class Fox:
         self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
         self.action_list.append((0, pad.press_button, [p3.pad.Button.X]))
         self.action_list.append((1, pad.release_button, [p3.pad.Button.X]))
+        self.action_list.append((1, None, []))
+
+    def sh_laser(self, pad):
+        self.action_list.append((0, pad.press_button, [p3.pad.Button.X]))
+        self.action_list.append((1, pad.release_button, [p3.pad.Button.X]))
+        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
+        self.action_list.append((0, pad.press_button, [p3.pad.Button.B]))
+        self.action_list.append((1, pad.release_button, [p3.pad.Button.B]))
+        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0]))
         self.action_list.append((1, None, []))

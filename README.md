@@ -1,3 +1,5 @@
+Credit to spxtr for the Dolphin Emulator I/O template code
+
 [![Test Status](https://travis-ci.org/spxtr/p3.svg)](https://travis-ci.org/spxtr/p3)
 
 # Super Smash Bros. Melee CPU
