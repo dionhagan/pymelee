@@ -1,138 +1,105 @@
+import pdb
+
+import random
+import p3.qlearn
+
 import p3.pad
+from p3.state import ActionState
 
 class Fox:
     def __init__(self):
         self.action_list = []
-        self.last_action = 0
+
+        self.last_frame = 0
+        self.last_state = None
+        self.last_action = None
+        self.ai = p3.qlearn.QLearn(actions=[], epsilon=0.75, alpha=0.2)
+
+    def generate_actions(self, pad):
+        actions = set()
+        actions.add(pad.reset)
+        inputs = [pad.press_button, pad.release_button, pad.press_trigger,
+                  pad.tilt_stick, pad.reset]
+
+        # populate set of possible actions
+        while len(actions) < 50000:
+            for i in range(50000):
+                action = random.choice(inputs)
+                frame_wait = random.randint(0, 5)
+                
+                if action == pad.press_button or action == pad.release_button:
+                    button = p3.pad.Button(random.randint(0, 10))
+                    actions.add((frame_wait, action, tuple([button])))
+
+                if action == pad.press_trigger:
+                    trigger = p3.pad.Trigger(random.randint(0, 1))
+                    pressure = random.uniform(0, 1)
+                    actions.add((frame_wait, action, tuple([trigger, pressure])))
+
+                if action == pad.tilt_stick:
+                    stick = p3.pad.Stick(random.randint(0, 1))
+                    x = random.uniform(0, 1)
+                    y = random.uniform(0, 1)
+                    actions.add((frame_wait, action, tuple([stick, x, y])))
+
+            print(len(actions))
+        print(actions)
+        return list(actions)
+
+    def update(self, state):
+        damage_taken, death = self.getAttrs(state)
+        damage_dealt, kill = self.getAttrs(state, 1)
+        reward = -1
+
+        def isDying(state):
+            return state.players[2].action_state <= 0xA
+
+        # penalty for death
+        if isDying:
+            reward += -100
+            if self.last_state:
+                self.ai.learn(self.last_state, self.last_action, reward, state)
+            if death:
+                self.last_state = None
+
+        # reward for a kill
+        if kill == 1:
+            reward += 100
+
+        # reward for percentage
+        reward -= damage_taken
+        reward += damage_dealt
+
+        # update Q vals
+        if self.last_state:
+            self.ai.learn(self.last_state, self.last_action, reward, state)
+
+        action = self.ai.choose_action(state)
+        self.action_list.append(action)
+
+        self.last_state = state
+        self.last_action = action
+
 
     def advance(self, state, pad):
         while self.action_list:
+            if not self.ai.actions:
+                self.ai.actions = self.generate_actions(pad)
+            
             wait, func, args = self.action_list[0]
-            if state.frame - self.last_action < wait:
+            if state.frame - self.last_frame < wait:
                 return
             self.action_list.pop(0)
             if func is not None:
                 func(*args)
-            self.last_action = state.frame
+            self.last_frame = state.frame
+
+            # update Q vals and add next action
+            self.update(state)
         else:
-            # Eventually this will point at some decision-making thing.
-            # pseudo: self.action_list = max(score(getSuccessors()))
-            self.shorthop_laser(pad)
+            if not self.ai.actions:
+                self.ai.actions = self.generate_actions(pad)
+            self.update(state)
 
-    """
-        FOX MOVESET
-    """
-
-    # FUNDAMENTALS
-    def stop(self):
-        self.action_list.append((1, None, []))
-
-    def pressA(self, pad, x=0.5, y=0.5):
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, x, y]))
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.A]))
-        self.action_list.append((2, pad.release_button, [p3.pad.Button.A]))
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
-
-    def pressB(self, pad, x=0.5, y=0.5):
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, x, y]))
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.B]))
-        self.action_list.append((2, pad.release_button, [p3.pad.Button.B]))
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
-
-    def pressX(self, pad):
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.X]))
-        self.action_list.append((2, pad.release_button, [p3.pad.Button.X]))
-
-    def shield(self, pad):
-        self.action_list.append((0, pad.press_trigger, [p3.pad.Trigger.L, 1]))
-
-
-    # MOVEMENT
-    def jump(self, pad):
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.X]))
-        self.action_list.append((3, pad.release_button, [p3.pad.Button.X]))
-
-    def shorthop(self, pad):
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.X]))
-        self.action_list.append((1, pad.release_button, [p3.pad.Button.X]))
-
-    def double_jump(self, pad):
-        self.jump()
-        self.jump()
-
-    def dash(self, pad, x, dur):
-        self.action_list.append((0, pad.tilt_stick, x, 0.5))
-        self.action_list.append((dur, pad.tilt_stick, 0.5, 0.5))
-
-    # SPECIALS
-    def laser(self, pad):
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.B]))
-        self.action_list.append((1, pad.release_button, [p3.pad.Button.B]))
-
-    def upB(self, pad):
-        pass
-
-    def sideB(self, pad):
-        pass
-
-    def shine(self, pad):
-        pass
-
-    # SMASH ATTACKS
-    def fsmash(self, pad, x):
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.C, x, 0.5]))
-        self.action_list.append((1, pad.tilt_stick, [p3.pad.Stick.C, 0.5, 0.5]))
-
-    def up_smash(self, pad):
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.C, 0.5, 1]))
-        self.action_list.append((1, pad.tilt_stick, [p3.pad.Stick.C, 0.5, 0.5]))
-
-    def down_smash(self, pad):
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.C, 0, 0.5]))
-        self.action_list.append((1, pad.tilt_stick, [p3.pad.Stick.C, 0.5, 0.5]))
-
-    # AERIALS
-    def shffl_nair(self, pad):
-        self.shorthop(pad)
-        self.pressA(pad)
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0]))
-        self.action_list.append((1, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
-
-    def shffl_fair(self, pad):
-        self.shorthop(pad)
-        self.pressA(pad,)
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0]))
-        self.action_list.append((1, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
-
-    def shffl_dair(self, pad):
-        pass
-
-    def shffl_bair(self, pad):
-        pass
-
-
-    # TECH
-    def shinespam(self, pad):
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.0]))
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.B]))
-        self.action_list.append((1, pad.release_button, [p3.pad.Button.B]))
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.X]))
-        self.action_list.append((1, pad.release_button, [p3.pad.Button.X]))
-        self.action_list.append((1, None, []))
-
-    def shorthop_laser(self, pad):
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.X]))
-        self.action_list.append((2, pad.release_button, [p3.pad.Button.X]))
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
-        self.action_list.append((0, pad.press_button, [p3.pad.Button.B]))
-        self.action_list.append((1, pad.release_button, [p3.pad.Button.B]))
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0]))
-        self.action_list.append((1, None, []))
-
-    def wavedash(self, pad, x):
-        self.shorthop(pad)
-        self.action_list.append((0, pad.tilt_stick, [p3.pad.Stick.MAIN, x, 0]))
-        self.action_list.append((0, pad.press_trigger, [p3.pad.Trigger.L]))
-        self.action_list.append((0, pad.release_trigger, [p3.pad.Trigger.L]))
-        self.action_list.append((1, pad.tilt_stick, [p3.pad.Stick.MAIN, 0.5, 0.5]))
+    def getAttrs(self, state, player=3):
+        return (state.players[player - 1].percent, state.players[player - 1].stocks)

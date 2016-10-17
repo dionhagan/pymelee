@@ -69,9 +69,10 @@ def main():
     fox = p3.fox.Fox()
 
     try:
-        print('Starting dolphin now. Press ^C to stop p3.')
         # open Dolphin via CLI
-        os.system("open ~/Desktop/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")
+        print('Starting dolphin now. Press ^C to stop p3.')
+        os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")#% sys.argv[1])
+        
         # configure paths
         pad_path = dolphin_dir + '/Pipes/pipe'
         mw_path = dolphin_dir + '/MemoryWatcher/MemoryWatcher'
