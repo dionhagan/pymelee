@@ -113,10 +113,15 @@ class Falco:
                 self.ai.actions = self.generate_actions(pad)
 
             # e.g. wait = 1; func = tilt_stick; args = {x: 0.5, y: 0.5}
-            wait, func, args = self.action_list.pop(0)
+            # peek at first action in stack
+            wait, func, args = self.action_list[0]
 
+            # stop actions until frame wait is over
             if state.frame - self.last_frame < wait:
                 return
+
+            # pop off first action if wait is over
+            self.action_list.pop(0)
 
             if func is not None:
                 func(*args)
