@@ -16,12 +16,18 @@ class Falco:
         self.ai = p3.qlearn.QLearn(actions=[], epsilon=0.75, alpha=0.1)
 
     def generate_actions(self, pad):
+        """
+            Creates a basic set of actions to sample from
+            called at start of new game or when action_list runs out
+        """
         actions = set()
+
+        # native input functions (used to pipe instructions)
         actions.add(pad.reset)
         inputs = [pad.press_button, pad.release_button, pad.press_trigger,
                   pad.tilt_stick, pad.reset]
 
-        # populate set of possible actions
+        # populate set of 50,000 possible actions
         while len(actions) < 50000:
             for _ in range(50000):
                 action = random.choice(inputs)
@@ -52,8 +58,14 @@ class Falco:
         return list(actions)
 
     def update(self, state):
-        damage_taken, death = self.getAttrs(state)
-        damage_dealt, kill = self.getAttrs(state, 1)
+        """
+            Calculate reward for current state and action,
+            and update Q-table
+        """
+
+        # extract damage/stock state for p1 and p3
+        damage_taken, death = self.getAttrs(state, player=3)
+        damage_dealt, kill = self.getAttrs(state, player=1)
         reward = -1
 
         # penalty for death
@@ -82,9 +94,11 @@ class Falco:
         if self.last_state:
             self.ai.learn(self.last_state, self.last_action, reward, state)
 
+        # choose next action
         action = self.ai.choose_action(state)
         self.action_list.append(action)
 
+        # record last state-action pair
         self.last_state = state
         self.last_action = action
 
@@ -94,16 +108,16 @@ class Falco:
 
             # print(state.frame)
 
+            # generate possible actions if none
             if not self.ai.actions:
                 self.ai.actions = self.generate_actions(pad)
 
-            wait, func, args = self.action_list[0]
-
-            print(func)
+            # e.g. wait = 1; func = tilt_stick; args = {x: 0.5, y: 0.5}
+            wait, func, args = self.action_list.pop(0)
 
             if state.frame - self.last_frame < wait:
                 return
-            self.action_list.pop(0)
+
             if func is not None:
                 func(*args)
             self.last_frame = state.frame
@@ -115,5 +129,6 @@ class Falco:
                 self.ai.actions = self.generate_actions(pad)
             self.update(state)
 
+    # extracts
     def getAttrs(self, state, player=3):
         return (state.players[player - 1].percent, state.players[player - 1].stocks)
