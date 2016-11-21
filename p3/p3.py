@@ -1,7 +1,7 @@
 import os
 import time
 
-import p3.fox
+import p3.falco
 import p3.memory_watcher
 import p3.menu_manager
 import p3.pad
@@ -30,7 +30,7 @@ def write_locations(dolphin_dir, locations):
             print('Could not detect dolphin directory.')
             return
 
-def run(fox, state, sm, mw, pad, stats):
+def run(falco, state, sm, mw, pad, stats):
     mm = p3.menu_manager.MenuManager()
     while True:
         last_frame = state.frame
@@ -40,14 +40,14 @@ def run(fox, state, sm, mw, pad, stats):
         if state.frame > last_frame:
             stats.add_frames(state.frame - last_frame)
             start = time.time()
-            make_action(state, pad, mm, fox)
+            make_action(state, pad, mm, falco)
             stats.add_thinking_time(time.time() - start)
 
-def make_action(state, pad, mm, fox):
+def make_action(state, pad, mm, falco):
     if state.menu == p3.state.Menu.Game:
-        fox.advance(state, pad)
+        falco.advance(state, pad)
     elif state.menu == p3.state.Menu.Characters:
-        mm.pick_fox(state, pad)
+        mm.pick_falco(state, pad)
     elif state.menu == p3.state.Menu.Stages:
         # Handle this once we know where the cursor position is in memory.
         pad.tilt_stick(p3.pad.Stick.C, 0.5, 0.5)
@@ -66,7 +66,7 @@ def main():
 
     stats = p3.stats.Stats()
 
-    fox = p3.fox.Fox()
+    falco = p3.falco.Falco()
 
     try:
         # open Dolphin via CLI
@@ -77,7 +77,7 @@ def main():
         pad_path = dolphin_dir + '/Pipes/pipe'
         mw_path = dolphin_dir + '/MemoryWatcher/MemoryWatcher'
         with p3.pad.Pad(pad_path) as pad, p3.memory_watcher.MemoryWatcher(mw_path) as mw:
-            run(fox, state, sm, mw, pad, stats)
+            run(falco, state, sm, mw, pad, stats)
     except KeyboardInterrupt:
         os.system("osascript -e 'quit app \"Dolphin\"'")
         print('Stopped')
