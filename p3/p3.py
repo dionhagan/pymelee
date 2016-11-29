@@ -69,10 +69,10 @@ def main():
     falco = p3.falco.Falco()
 
     try:
-        # open Dolphin via CLI
+        # open Dolphin via CLI - comment out system call and add your own directory
         print('Starting dolphin now. Press ^C to stop p3.')
         os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")#% sys.argv[1])
-        
+
         # configure paths
         pad_path = dolphin_dir + '/Pipes/pipe'
         mw_path = dolphin_dir + '/MemoryWatcher/MemoryWatcher'
@@ -82,6 +82,8 @@ def main():
         os.system("osascript -e 'quit app \"Dolphin\"'")
         print('Stopped')
         print(stats)
+    # finally:
+    #     pass
 
 if __name__ == '__main__':
     main()

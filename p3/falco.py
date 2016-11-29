@@ -30,7 +30,7 @@ class Falco:
         # should be 40 x framewait many options
         for _ in range(500):
             action = random.choice(inputs)
-            frame_wait = random.randint(0, 5)
+            frame_wait = 0 #random.randint(0, 5)
 
             if action == pad.press_button:
                 button = p3.pad.Button(random.randint(0, 10))
