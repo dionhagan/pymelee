@@ -9,7 +9,6 @@ from p3.state import ActionState
 class Falco:
     def __init__(self):
         self.action_list = []
-
         self.last_frame = 0
         self.last_state = None
         self.last_action = None
@@ -23,35 +22,34 @@ class Falco:
         actions = set()
 
         # native input functions (used to pipe instructions)
-        actions.add(pad.reset)
-        inputs = [pad.press_button, pad.release_button, pad.press_trigger,
-                  pad.tilt_stick, pad.reset]
+        actions.add((0, pad.reset, None))
+        inputs = [pad.press_button, pad.press_trigger, pad.tilt_stick]
 
-        # populate set of 50,000 possible actions
-        while len(actions) < 50000:
-            for _ in range(50000):
-                action = random.choice(inputs)
-                print(action)
-                frame_wait = random.randint(0, 5)
+        # optimization: use tool like itertools.permutations
+        # while len(actions) < 500:
+        # should be 40 x framewait many options
+        for _ in range(500):
+            action = random.choice(inputs)
+            frame_wait = random.randint(0, 5)
 
-                if action == pad.press_button or action == pad.release_button:
-                    button = p3.pad.Button(random.randint(0, 10))
-                    actions.add((frame_wait, action, tuple([button])))
+            if action == pad.press_button:
+                button = p3.pad.Button(random.randint(0, 10))
+                actions.add((frame_wait, action, tuple([button])))
+                actions.add((0, pad.release_button, tuple([button])))
 
-                if action == pad.press_trigger:
-                    trigger = p3.pad.Trigger(random.randint(0, 1))
-                    pressure = random.uniform(0, 1)
-                    actions.add((frame_wait, action, tuple([trigger, pressure])))
-                    actions.add((0, action, tuple([trigger, 0])))
+            if action == pad.press_trigger:
+                trigger = p3.pad.Trigger(random.randint(0, 1))
+                pressures = [0, 0.5, 1]
+                pressure = random.choice(pressures)
+                actions.add((frame_wait, action, tuple([trigger, pressure])))
+                actions.add((0, action, tuple([trigger, 0])))
 
-                if action == pad.tilt_stick:
-                    stick = p3.pad.Stick(random.randint(0, 1))
-                    directions = [1.0, 0.0, 0.5]
-                    # x = random.choice(directions)
-                    # y = random.choice(directions)
-                    x = directions[random.randint(0, 2)]
-                    y = directions[random.randint(0, 2)]
-                    actions.add((frame_wait, action, tuple([stick, x, y])))
+            if action == pad.tilt_stick:
+                stick = p3.pad.Stick(random.randint(0, 1))
+                directions = [1.0, 0.0, 0.5]
+                x = random.choice(directions)
+                y = random.choice(directions)
+                actions.add((frame_wait, action, tuple([stick, x, y])))
 
             print(len(actions))
         print(actions)
@@ -64,8 +62,8 @@ class Falco:
         """
 
         # extract damage/stock state for p1 and p3
-        damage_taken, death = self.getAttrs(state, player=3)
-        damage_dealt, kill = self.getAttrs(state, player=1)
+        damage_taken, death = self.reward_state(state, player=3)
+        damage_dealt, kill = self.reward_state(state, player=1)
         reward = -1
 
         # penalty for death
@@ -123,8 +121,10 @@ class Falco:
             # pop off first action if wait is over
             self.action_list.pop(0)
 
-            if func is not None:
+            if func and args:
                 func(*args)
+            elif func:
+                func()
             self.last_frame = state.frame
 
             # update Q vals and add next action
@@ -135,5 +135,5 @@ class Falco:
             self.update(state)
 
     # extracts
-    def getAttrs(self, state, player=3):
+    def reward_state(self, state, player=3):
         return (state.players[player - 1].percent, state.players[player - 1].stocks)
