@@ -1,17 +1,24 @@
 import random
 import pickle
+import pandas as pd
 
 import p3.pad
 from p3.state import ActionState
 
+
 class QLearn(object):
     def __init__(self, actions, epsilon=0.2, alpha=0.2, gamma=0.9):
         self.q = {}
-        # try:
-        #     with open('save.p', 'rb') as f:
-        #         self.q = pickle.load(f)
-        # except:
-        #     print("Could not load save")
+
+        print("Loading Q table...")
+        # read in Pandas Series from HDF Store, convert to dict
+        # qtable = pd.read_hdf('qtable.h5')
+        # self.q = qtable.to_dict()
+        with open("qtable.p", "rb") as f:
+            try:
+                self.q = pickle.load(f)
+            except:
+                self.q = {}
 
         self.actions = actions
         self.epsilon = epsilon
@@ -40,14 +47,13 @@ class QLearn(object):
 
     def learnQ(self, state, action, reward, value):
         oldv = self.q.get((state, action), None)
-        if oldv is None:
-            # print ("New")
-            # print (reward)
-            self.q[(state, action)] = reward
-        else:
-            # print ("Update")
-            # print (reward)
+        if oldv:
+            print ("Update")
             self.q[(state, action)] = oldv + self.alpha * (value - oldv)
+        else:
+            print ("New")
+            self.q[(state, action)] = reward
+
 
     def learn(self, state1, action1, reward, state2):
         maxqnew = max([self.getQ(state2, a) for a in self.actions])

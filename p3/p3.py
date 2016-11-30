@@ -2,14 +2,18 @@ import os
 import time
 import pickle
 import json
+import numpy as np
+import pandas as pd
 
 import p3.falco
 import p3.memory_watcher
 import p3.menu_manager
 import p3.pad
+from p3.pad import Pad
 import p3.state
 import p3.state_manager
 import p3.stats
+import p3.serialize
 
 
 def find_dolphin_dir():
@@ -47,7 +51,7 @@ def run(falco, state, sm, mw, pad, stats):
 
 def make_action(state, pad, mm, falco):
     if state.menu == p3.state.Menu.Game:
-        falco.advance(state, pad)
+        falco.advance(state)
     elif state.menu == p3.state.Menu.Characters:
         mm.pick_falco(state, pad)
     elif state.menu == p3.state.Menu.Stages:
@@ -68,8 +72,6 @@ def main():
     write_locations(dolphin_dir, sm.locations())
     stats = p3.stats.Stats()
 
-    falco = p3.falco.Falco()
-
     try:
         # open Dolphin via CLI - comment out system call and add your own directory
         print('Starting dolphin now. Press ^C to stop p3.')
@@ -79,14 +81,29 @@ def main():
         pad_path = dolphin_dir + '/Pipes/pipe'
         mw_path = dolphin_dir + '/MemoryWatcher/MemoryWatcher'
         with p3.pad.Pad(pad_path) as pad, p3.memory_watcher.MemoryWatcher(mw_path) as mw:
+            falco = p3.falco.Falco(pad)
             run(falco, state, sm, mw, pad, stats)
     except KeyboardInterrupt:
+        # executed on Ctrl-C
+        print ('\n')
+    finally:
+        # final code to be executed before program exits
         os.system("osascript -e 'quit app \"Dolphin\"'")
         print('Stopped')
         print(stats)
-    # finally:
-    #     with open("save.p", "wb") as f:
-    #         pickle.dump(dict(zip(falco.ai.q.keys(), str(falco.ai.q.values())), f))
+
+        # import pdb; pdb.set_trace()
+        print('Saving Q-table...')
+        with open("qtable.p", "wb") as f:
+            print("Q Table Size: %i" % len(falco.ai.q))
+            pickle.dump(falco.ai.q, f)
+
+        # vector = p3.serialize.Serializer(falco.ai.q)
+        # qtable = pd.read_json(vector.toJSON(), typ='series', orient='records')
+        # print (qtable)
+        # hdf = pd.HDFStore('qtable.h5')
+        # hdf.put('qtable', qtable)
+        # hdf.close()
 
 if __name__ == '__main__':
     main()

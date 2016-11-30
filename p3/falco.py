@@ -2,20 +2,32 @@ import pdb
 import pickle
 import random
 import numpy as np
+import pandas as pd
 
 import p3.qlearn
 import p3.pad
 from p3.state import ActionState
 
 class Falco:
-    def __init__(self):
+    def __init__(self, pad):
+        self.pad = pad
         self.action_list = []
+
+        # convert class methods to serializable strings
+        self.action_string = {
+            'press_button': self.pad.press_button,
+            'release_button': self.pad.release_button,
+            'press_trigger': self.pad.press_trigger,
+            'tilt_stick': self.pad.tilt_stick,
+            'reset': self.pad.reset
+        }
+
         self.last_frame = 0
         self.last_state = None
         self.last_action = None
         self.ai = p3.qlearn.QLearn(actions=[], epsilon=0.75, alpha=0.1)
 
-    def generate_actions(self, pad):
+    def generate_actions(self):
         """
             Creates a basic set of actions to sample from
             called at start of new game or when action_list runs out
@@ -23,29 +35,29 @@ class Falco:
         actions = set()
 
         # native input functions (used to pipe instructions)
-        actions.add((0, pad.reset, None))
-        inputs = [pad.press_button, pad.press_trigger, pad.tilt_stick]
+        actions.add((0, 'reset', None))
+        inputs = ['press_button', 'press_trigger', 'tilt_stick']
 
         # optimization: use tool like itertools.permutations
         # should be 40 x framewait many options
-        for _ in range(5000):
+        for _ in range(10000):
             action = random.choice(inputs)
             frame_wait = random.randint(0, 1)
             frame_wait = np.random.poisson(7, 1)[0]
 
-            if action == pad.press_button:
+            if action == 'press_button':
                 button = p3.pad.Button(random.randint(0, 10))
                 actions.add((frame_wait, action, tuple([button])))
-                actions.add((0, pad.release_button, tuple([button])))
+                actions.add((0, 'release_button', tuple([button])))
 
-            if action == pad.press_trigger:
+            if action == 'press_trigger':
                 trigger = p3.pad.Trigger(random.randint(0, 1))
                 pressures = [0, 0.5, 1]
                 pressure = random.choice(pressures)
                 actions.add((frame_wait, action, tuple([trigger, pressure])))
                 actions.add((0, action, tuple([trigger, 0])))
 
-            if action == pad.tilt_stick:
+            if action == 'tilt_stick':
                 stick = p3.pad.Stick(random.randint(0, 1))
                 directions = [1.0, 0.0, 0.5]
                 x = random.choice(directions)
@@ -53,7 +65,6 @@ class Falco:
                 actions.add((frame_wait, action, tuple([stick, x, y])))
 
             print(len(actions))
-        print(actions)
         return list(actions)
 
     def update(self, state):
@@ -65,24 +76,30 @@ class Falco:
 
         # extract damage/stock state for p1 and p3
         if self.last_state:
-            damage_taken, death = self.reward_state(state, player=3)
-            damage_dealt, kill = self.reward_state(state, player=1)
-        else:
-            damage_taken, death = 0, 0
-            damage_dealt, kill = 0, 0
+            # print (self.last_frame)
+            # print(self.last_state == state)
+            p3_damage, p3_stocks = self.reward_state(state, player=3)
+            p1_damage, p1_stocks = self.reward_state(state, player=1)
 
-        # print (damage_taken, death)
+            # dam3, stock3 = self.reward_state(self.last_state, player=3)
+            # dam1, stock1 = self.reward_state(self.last_state, player=1)
+            #
+            # p3_damage, p3_stocks = p3_damage - dam3, stock3 - p3_stocks
+            # p1_damage, p1_stocks = p1_damage - dam1, stock1 - p1_stocks
+        else:
+            p3_damage, p3_stocks = 0, 4
+            p1_damage, p1_stocks = 0, 4
+
+        # print (p3_damage, p3_death)
 
         # reward for percentage
-        reward -= 0.1 * damage_taken
-        reward += 50 * damage_dealt
+        reward -= 0.5 * p3_damage + 2 * p1_stocks
+        reward += 0.75 * p1_damage + 4 * p3_stocks
 
-        # penalty for death
+        # penalty for p3_death
         if state.players[2].action_state.value <= 0xA:
             print("Dying!")
             reward += -1
-            # if death:
-            #     self.last_state = None
 
         # reward for a kill
         if state.players[0].action_state.value <= 0xA:
@@ -104,12 +121,8 @@ class Falco:
         self.last_action = action
 
 
-    def advance(self, state, pad):
-        while self.action_list:
-
-            # print(state.frame)
-
-            # generate possible actions if none
+    def advance(self, state):
+        while self.action_list and self.ai.actions:
             if not self.ai.actions:
                 self.ai.actions = self.generate_actions(pad)
 
@@ -124,17 +137,20 @@ class Falco:
             # pop off first action if wait is over
             self.action_list.pop(0)
 
-            if func and args:
-                func(*args)
-            elif func:
-                func()
+            if func:
+                # convert action string back to function
+                f = self.action_string[func]
+                if args:
+                    f(*args)
+                else:
+                    f()
             self.last_frame = state.frame
 
             # update Q vals and add next action
             self.update(state)
         else:
-            if not self.ai.actions:
-                self.ai.actions = self.generate_actions(pad)
+            # generate possible actions if none
+            self.ai.actions = self.generate_actions()
             self.update(state)
 
     # extracts
