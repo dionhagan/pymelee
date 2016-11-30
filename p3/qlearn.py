@@ -7,10 +7,11 @@ from p3.state import ActionState
 class QLearn(object):
     def __init__(self, actions, epsilon=0.2, alpha=0.2, gamma=0.9):
         self.q = {}
-
         # try:
-        #     with open('fox.p', 'rb') as handle:
-        #         self.q = pickle.load(handle)
+        #     with open('save.p', 'rb') as f:
+        #         self.q = pickle.load(f)
+        # except:
+        #     print("Could not load save")
 
         self.actions = actions
         self.epsilon = epsilon
@@ -41,16 +42,13 @@ class QLearn(object):
         oldv = self.q.get((state, action), None)
         if oldv is None:
             # print ("New")
-            print (reward)
+            # print (reward)
             self.q[(state, action)] = reward
         else:
             # print ("Update")
-            print (reward)
+            # print (reward)
             self.q[(state, action)] = oldv + self.alpha * (value - oldv)
 
     def learn(self, state1, action1, reward, state2):
         maxqnew = max([self.getQ(state2, a) for a in self.actions])
         self.learnQ(state1, action1, reward, reward + self.gamma*maxqnew)
-
-        # with open('fox.p', 'wb') as handle:
-        #     self.q = pickle.dump(self.q, handle)

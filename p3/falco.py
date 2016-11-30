@@ -1,8 +1,9 @@
 import pdb
-
+import pickle
 import random
-import p3.qlearn
+import numpy as np
 
+import p3.qlearn
 import p3.pad
 from p3.state import ActionState
 
@@ -26,11 +27,11 @@ class Falco:
         inputs = [pad.press_button, pad.press_trigger, pad.tilt_stick]
 
         # optimization: use tool like itertools.permutations
-        # while len(actions) < 500:
         # should be 40 x framewait many options
-        for _ in range(500):
+        for _ in range(5000):
             action = random.choice(inputs)
-            frame_wait = 0 #random.randint(0, 5)
+            frame_wait = random.randint(0, 1)
+            frame_wait = np.random.poisson(7, 1)[0]
 
             if action == pad.press_button:
                 button = p3.pad.Button(random.randint(0, 10))
@@ -60,33 +61,35 @@ class Falco:
             Calculate reward for current state and action,
             and update Q-table
         """
+        reward = -1
 
         # extract damage/stock state for p1 and p3
-        damage_taken, death = self.reward_state(state, player=3)
-        damage_dealt, kill = self.reward_state(state, player=1)
-        reward = -1
+        if self.last_state:
+            damage_taken, death = self.reward_state(state, player=3)
+            damage_dealt, kill = self.reward_state(state, player=1)
+        else:
+            damage_taken, death = 0, 0
+            damage_dealt, kill = 0, 0
+
+        # print (damage_taken, death)
+
+        # reward for percentage
+        reward -= 0.1 * damage_taken
+        reward += 50 * damage_dealt
 
         # penalty for death
         if state.players[2].action_state.value <= 0xA:
             print("Dying!")
             reward += -1
-            if self.last_state:
-                self.ai.learn(self.last_state, self.last_action, reward, state)
-            if death:
-                self.last_state = None
+            # if death:
+            #     self.last_state = None
 
         # reward for a kill
         if state.players[0].action_state.value <= 0xA:
             print("Killing!")
             reward += 1
-            if self.last_state:
-                self.ai.learn(self.last_state, self.last_action, reward, state)
 
-        # reward for percentage
-        reward -= 0.1 * damage_taken
-        reward += 0.1 * damage_dealt
-
-        # print(reward)
+        print(reward)
 
         # update Q vals
         if self.last_state:
@@ -136,4 +139,9 @@ class Falco:
 
     # extracts
     def reward_state(self, state, player=3):
-        return (state.players[player - 1].percent, state.players[player - 1].stocks)
+        # print(self.last_state.players[player - 1].percent - state.players[player - 1].percent)
+        # damage = state.players[player - 1].percent - self.last_state.players[player - 1].percent
+        # stocks = self.last_state.players[player - 1].stocks - state.players[player - 1].stocks
+        damage = state.players[player - 1].percent
+        stocks = state.players[player - 1].stocks
+        return (damage, stocks)

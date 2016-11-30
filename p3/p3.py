@@ -1,5 +1,7 @@
 import os
 import time
+import pickle
+import json
 
 import p3.falco
 import p3.memory_watcher
@@ -60,10 +62,10 @@ def main():
         print('Could not find dolphin config dir.')
         return
 
+    # initialize memory managersdol
     state = p3.state.State()
     sm = p3.state_manager.StateManager(state)
     write_locations(dolphin_dir, sm.locations())
-
     stats = p3.stats.Stats()
 
     falco = p3.falco.Falco()
@@ -83,7 +85,8 @@ def main():
         print('Stopped')
         print(stats)
     # finally:
-    #     pass
+    #     with open("save.p", "wb") as f:
+    #         pickle.dump(dict(zip(falco.ai.q.keys(), str(falco.ai.q.values())), f))
 
 if __name__ == '__main__':
     main()
