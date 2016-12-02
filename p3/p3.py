@@ -13,7 +13,6 @@ from p3.pad import Pad
 import p3.state
 import p3.state_manager
 import p3.stats
-import p3.serialize
 
 
 def find_dolphin_dir():
@@ -51,14 +50,17 @@ def run(falco, state, sm, mw, pad, stats):
 
 def make_action(state, pad, mm, falco):
     if state.menu == p3.state.Menu.Game:
+        # pad.release_button(p3.pad.Pad.START)
         falco.advance(state)
     elif state.menu == p3.state.Menu.Characters:
         mm.pick_falco(state, pad)
     elif state.menu == p3.state.Menu.Stages:
         # Handle this once we know where the cursor position is in memory.
         pad.tilt_stick(p3.pad.Stick.C, 0.5, 0.5)
+        mm.pick_fd(state, pad)
     elif state.menu == p3.state.Menu.PostGame:
         mm.press_start_lots(state, pad)
+        # pad.press_button(p3.pad.Pad.START)
 
 def main():
     dolphin_dir = find_dolphin_dir()
@@ -87,23 +89,16 @@ def main():
         # executed on Ctrl-C
         print ('\n')
     finally:
-        # final code to be executed before program exits
-        os.system("osascript -e 'quit app \"Dolphin\"'")
-        print('Stopped')
-        print(stats)
-
-        # import pdb; pdb.set_trace()
         print('Saving Q-table...')
         with open("qtable.p", "wb") as f:
             print("Q Table Size: %i" % len(falco.ai.q))
             pickle.dump(falco.ai.q, f)
 
-        # vector = p3.serialize.Serializer(falco.ai.q)
-        # qtable = pd.read_json(vector.toJSON(), typ='series', orient='records')
-        # print (qtable)
-        # hdf = pd.HDFStore('qtable.h5')
-        # hdf.put('qtable', qtable)
-        # hdf.close()
+        # final code to be executed before program exits
+        os.system("osascript -e 'quit app \"Dolphin\"'")
+        print('Stopped')
+        print(stats)
+        print('\n')
 
 if __name__ == '__main__':
     main()
