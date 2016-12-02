@@ -39,7 +39,7 @@ class MenuManager:
             pad.press_button(p3.pad.Button.A)
 
     def press_start_lots(self, state, pad):
-        if state.frame % 1000 == 0:
+        if state.frame % 500 == 0:
             pad.press_button(p3.pad.Button.START)
         else:
             pad.release_button(p3.pad.Button.START)

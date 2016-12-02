@@ -7,7 +7,7 @@ from p3.state import ActionState
 
 
 class QLearn(object):
-    def __init__(self, actions, epsilon=0.2, alpha=0.2, gamma=0.9):
+    def __init__(self, actions, epsilon=0.2, alpha=0.2, gamma=0.75):
         self.q = {}
 
         print("Loading Q table...")
@@ -48,10 +48,10 @@ class QLearn(object):
     def learnQ(self, state, action, reward, value):
         oldv = self.q.get((state, action), None)
         if oldv:
-            print ("Update")
+            # print ("Update")
             self.q[(state, action)] = oldv + self.alpha * (value - oldv)
         else:
-            print ("New")
+            # print ("New")
             self.q[(state, action)] = reward
 
 
