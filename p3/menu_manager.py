@@ -17,12 +17,23 @@ class MenuManager:
             # pad.tilt_stick(p3.pad.Stick.C, 0.4 * math.cos(angle) + 0.5, 0.4 * math.sin(angle) + 0.5)
         else:
             # Go to falco and press A
-            target_x = -30.5
-            target_y = 11.5
+
+            # Falco
+            # target_x = -30.5
+            # target_y = 11.5
+
+            # Marth
+            # target_x = 10.5
+            # target_y = 4
+
+            # Falcon
+            target_x = 20.5
+            target_y = 15.5
+
             dx = target_x - state.players[2].cursor_x
             dy = target_y - state.players[2].cursor_y
             mag = math.sqrt(dx * dx + dy * dy)
-            if mag < 0.3:
+            if mag < 0.5:
                 pad.press_button(p3.pad.Button.A)
                 self.selected_falco = True
             else:

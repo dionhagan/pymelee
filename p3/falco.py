@@ -39,6 +39,7 @@ class Falco:
             'upB0': self.upB0, 'upB45': self.upB45, 'upB90': self.upB90, 'upB135': self.upB135,
             'upB180': self.upB180, 'upB225': self.upB225, 'upB270': self.upB270, 'upB315': self.upB315,
             'sideB_left': self.sideB_left, 'sideB_right': self.sideB_right,
+            'lcancel': self.lcancel
 
             # NOT WORKING
             # 'wavedash': self.wavedash,
@@ -63,22 +64,24 @@ class Falco:
             frame_wait = np.random.poisson(8, 1)[0]
 
             if action == 'tilt_stick':
-                stick = p3.pad.Stick(random.randint(0, 1))
+                # stick = p3.pad.Stick(random.randint(0, 1))
+                stick = p3.pad.Stick.MAIN
                 directions = [0.0, 0.5, 1.0]
                 x = random.choice(directions)
                 y = random.choice(directions)
                 actions.add((frame_wait, action, tuple([stick, x, y])))
 
-            # elif action == 'press_button':
-            #     button = p3.pad.Button(random.randint(0, 10))
-            #     actions.add((frame_wait, action, tuple([button])))
-            #     actions.add((frame_wait, 'release_button', tuple([button])))
-            #
-            # elif action == 'press_trigger':
-            #     trigger = p3.pad.Trigger(random.randint(0, 1))
-            #     pressures = [0, 0.5, 1]
-            #     pressure = random.choice(pressures)
-            #     actions.add((frame_wait, action, tuple([trigger, pressure])))
+            # Currently inactive
+            elif action == 'press_button':
+                button = p3.pad.Button(random.randint(0, 10))
+                actions.add((frame_wait, action, tuple([button])))
+                actions.add((frame_wait, 'release_button', tuple([button])))
+
+            elif action == 'press_trigger':
+                trigger = p3.pad.Trigger(random.randint(0, 1))
+                pressures = [0, 0.5, 1]
+                pressure = random.choice(pressures)
+                actions.add((frame_wait, action, tuple([trigger, pressure])))
 
             else:
                 actions.add(action)
@@ -341,6 +344,9 @@ class Falco:
 
 
     # TECH
+    def lcancel(self):
+        self.shield(wait=3)
+
     def shinespam(self):
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.0]))
         self.action_list.append((0, 'press_button', [p3.pad.Button.B]))
