@@ -35,7 +35,7 @@ def write_locations(dolphin_dir, locations):
             print('Could not detect dolphin directory.')
             return
 
-def run(falco, state, sm, mw, pad, stats):
+def run(cpu, state, sm, mw, pad, stats):
     mm = p3.menu_manager.MenuManager()
     while True:
         last_frame = state.frame
@@ -45,22 +45,21 @@ def run(falco, state, sm, mw, pad, stats):
         if state.frame > last_frame:
             stats.add_frames(state.frame - last_frame)
             start = time.time()
-            make_action(state, pad, mm, falco)
+            make_action(state, pad, mm, cpu)
             stats.add_thinking_time(time.time() - start)
 
-def make_action(state, pad, mm, falco):
+def make_action(state, pad, mm, cpu):
     if state.menu == p3.state.Menu.Game:
         # pad.release_button(p3.pad.Pad.START)
-        falco.advance(state)
+        cpu.advance(state)
     elif state.menu == p3.state.Menu.Characters:
-        mm.pick_falco(state, pad)
+        mm.pick_cpu(state, pad)
     elif state.menu == p3.state.Menu.Stages:
         # Handle this once we know where the cursor position is in memory.
         pad.tilt_stick(p3.pad.Stick.C, 0.5, 0.5)
         mm.pick_fd(state, pad)
     elif state.menu == p3.state.Menu.PostGame:
         mm.press_start_lots(state, pad)
-        # pad.press_button(p3.pad.Pad.START)
 
 def main():
     dolphin_dir = find_dolphin_dir()
@@ -68,7 +67,7 @@ def main():
         print('Could not find dolphin config dir.')
         return
 
-    # initialize memory managersdol
+    # initialize memory managers
     state = p3.state.State()
     sm = p3.state_manager.StateManager(state)
     write_locations(dolphin_dir, sm.locations())
@@ -80,19 +79,30 @@ def main():
         os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")#% sys.argv[1])
 
         # configure paths
-        pad_path = dolphin_dir + '/Pipes/pipe'
+        # p2_pad_path = dolphin_dir + '/Pipes/pipe2'
+        p3_pad_path = dolphin_dir + '/Pipes/pipe'
         mw_path = dolphin_dir + '/MemoryWatcher/MemoryWatcher'
-        with p3.pad.Pad(pad_path) as pad, p3.memory_watcher.MemoryWatcher(mw_path) as mw:
-            falco = p3.falco.Falco(pad)
-            run(falco, state, sm, mw, pad, stats)
+        # with p3.pad.Pad(p2_pad_path) as pad2,
+        with p3.pad.Pad(p3_pad_path) as pad3, p3.memory_watcher.MemoryWatcher(mw_path) as mw:
+            # initialize CPUs
+            # falcon2 = p3.falco.Falco(pad2, player=2, enemy=3)
+            cpu3 = p3.falco.Falco(pad3, player=3, enemy=1)
+
+            # start both CPUs
+            # run(falcon2, state, sm, mw, pad2, stats)
+            run(cpu3, state, sm, mw, pad3, stats)
+
     except KeyboardInterrupt:
         # executed on Ctrl-C
-        print ('\n')
+        print ("CTRL-C")
     finally:
-        print('Saving Q-table...')
-        with open("qtable.p", "wb") as f:
-            print("Q Table Size: %i" % len(falco.ai.q))
-            pickle.dump(falco.ai.q, f)
+        print('Saving Q-tables...')
+        # with open("p3/data/qtable2.p", "wb") as f2,
+        with open("p3/data/qtable3.p", "wb") as f3:
+            # print("P1 Q-Table Size: %i" % len(falcon2.ai.q))
+            # pickle.dump(falcon2.ai.q, f2)
+            print("P3 Q-Table Size: %i" % len(cpu3.ai.q))
+            pickle.dump(cpu3.ai.q, f3)
 
         # final code to be executed before program exits
         os.system("osascript -e 'quit app \"Dolphin\"'")

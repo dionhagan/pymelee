@@ -7,14 +7,11 @@ from p3.state import ActionState
 
 
 class QLearn(object):
-    def __init__(self, actions, epsilon=0.2, alpha=0.2, gamma=0.75):
+    def __init__(self, actions, epsilon=0.2, alpha=0.2, gamma=0.75, player=3):
         self.q = {}
 
-        print("Loading Q table...")
-        # read in Pandas Series from HDF Store, convert to dict
-        # qtable = pd.read_hdf('qtable.h5')
-        # self.q = qtable.to_dict()
-        with open("qtable.p", "rb") as f:
+        print("Loading P%i Q table..." % player)
+        with open("p3/data/qtable%i.p" % player, "rb") as f:
             try:
                 self.q = pickle.load(f)
             except:

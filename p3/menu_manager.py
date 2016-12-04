@@ -5,28 +5,28 @@ import p3.pad
 
 class MenuManager:
     def __init__(self):
-        self.selected_falco = False
+        self.selected_cpu = False
 
-    def pick_falco(self, state, pad):
-        if self.selected_falco:
+    def pick_cpu(self, state, pad):
+        if self.selected_cpu:
             # Release buttons and lazilly rotate the c stick.
             pad.release_button(p3.pad.Button.A)
             pad.tilt_stick(p3.pad.Stick.MAIN, 0.5, 0.5)
-            self.press_start_lots(state, pad)
+            self.press_start(state, pad)
             # angle = (state.frame % 240) / 240.0 * 2 * math.pi
             # pad.tilt_stick(p3.pad.Stick.C, 0.4 * math.cos(angle) + 0.5, 0.4 * math.sin(angle) + 0.5)
         else:
             # Go to falco and press A
 
-            # Falco
+            # FALCO
             # target_x = -30.5
             # target_y = 11.5
 
-            # Marth
+            # MARTH
             # target_x = 10.5
             # target_y = 4
 
-            # Falcon
+            # FALCON
             target_x = 20.5
             target_y = 15.5
 
@@ -35,7 +35,7 @@ class MenuManager:
             mag = math.sqrt(dx * dx + dy * dy)
             if mag < 0.5:
                 pad.press_button(p3.pad.Button.A)
-                self.selected_falco = True
+                self.selected_cpu = True
             else:
                 pad.tilt_stick(p3.pad.Stick.MAIN, 0.5 * (dx / mag) + 0.5, 0.5 * (dy / mag) + 0.5)
 
@@ -49,8 +49,14 @@ class MenuManager:
         if mag < 0.3:
             pad.press_button(p3.pad.Button.A)
 
-    def press_start_lots(self, state, pad):
+    def press_start(self, state, pad):
         if state.frame % 500 == 0:
+            pad.press_button(p3.pad.Button.START)
+        else:
+            pad.release_button(p3.pad.Button.START)
+
+    def press_start_lots(self, state, pad):
+        if state.frame % 2 == 0:
             pad.press_button(p3.pad.Button.START)
         else:
             pad.release_button(p3.pad.Button.START)
