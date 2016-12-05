@@ -32,9 +32,13 @@ class Falco:
 
         # convert native commands to serializable strings
         self.move_string = {
-            'pressZ': self.pressZ,
-            # 'stop': self.stop, 'laser': self.laser, 'shine': self.shine,
-            # 'shield': self.shield, 'light_shield': self.light_shield,
+            #'pressZ': self.pressZ,
+            # 'stop': self.stop, 
+            # 'laser': self.laser, 
+            # 'shine': self.shine,
+            'shield': self.shield, 
+            # 'light_shield': self.light_shield,
+
             # 'dash_left': self.dash_left, 'dash_right': self.dash_right,
             # 'shorthop': self.shorthop, 'fullhop': self.fullhop, 'double_jump': self.double_jump,
             # 'pressA': self.pressA, 'pressB': self.pressB, 'pressX': self.pressX, 'pressZ': self.pressZ,
@@ -48,7 +52,7 @@ class Falco:
 
             # NOT WORKING
             # 'wavedash': self.wavedash,
-            # 'shorthop_laser': self.shorthop_laser,
+            #'shorthop_laser': self.shorthop_laser,
             # 'shinespam': self.shinespam,
         }
 
@@ -220,14 +224,14 @@ class Falco:
 
     def shield(self, wait=30):
         self.action_list.append((wait, 'press_trigger', [p3.pad.Trigger.L, 1]))
-        self.action_list.append((0, 'press_trigger', [p3.pad.Trigger.L, 0]))
+        self.action_list.append((5, 'press_trigger', [p3.pad.Trigger.L, 0]))
 
     def light_shield(self, wait=30):
         self.action_list.append((wait, 'press_trigger', [p3.pad.Trigger.L, 0.5]))
         self.action_list.append((0, 'press_trigger', [p3.pad.Trigger.L, 0]))
 
     def pressZ(self):
-        self.action_list.append((9, 'press_button', [p3.pad.Button.Z]))
+        self.action_list.append((0, 'press_button', [p3.pad.Button.Z]))
         self.action_list.append((0, 'release_button', [p3.pad.Button.Z]))
 
     def pressA(self, x=0.5, y=0.5):

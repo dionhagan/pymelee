@@ -76,7 +76,9 @@ def main():
     try:
         # open Dolphin via CLI - comment out system call and add your own directory
         print('Starting dolphin now. Press ^C to stop p3.')
-        os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")#% sys.argv[1])
+        #Dions: os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")#% sys.argv[1])
+        os.system("open ~/Downloads/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a /Applications/Dolphin.app/")#% sys.argv[1])
+
 
         # configure paths
         # p2_pad_path = dolphin_dir + '/Pipes/pipe2'
