@@ -59,6 +59,7 @@ def make_action(state, pad, mm, cpu):
         pad.tilt_stick(p3.pad.Stick.C, 0.5, 0.5)
         mm.pick_fd(state, pad)
     elif state.menu == p3.state.Menu.PostGame:
+        cpu.pad.reset()
         mm.press_start_lots(state, pad)
 
 def main():
@@ -76,8 +77,8 @@ def main():
     try:
         # open Dolphin via CLI - comment out system call and add your own directory
         print('Starting dolphin now. Press ^C to stop p3.')
-        #Dions: os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")#% sys.argv[1])
-        os.system("open ~/Downloads/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a /Applications/Dolphin.app/")#% sys.argv[1])
+        os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")#% sys.argv[1])
+        # os.system("open ~/Downloads/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a /Applications/Dolphin.app/")#% sys.argv[1])
 
 
         # configure paths
@@ -88,7 +89,7 @@ def main():
         with p3.pad.Pad(p3_pad_path) as pad3, p3.memory_watcher.MemoryWatcher(mw_path) as mw:
             # initialize CPUs
             # falcon2 = p3.falco.Falco(pad2, player=2, enemy=3)
-            cpu3 = p3.falco.Falco(pad3, player=3, enemy=1)
+            cpu3 = p3.falco.Falco(pad3, epsilon=0.5, player=3, enemy=1)
 
             # start both CPUs
             # run(falcon2, state, sm, mw, pad2, stats)

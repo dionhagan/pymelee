@@ -14,6 +14,7 @@ class QLearn(object):
         with open("p3/data/qtable%i.p" % player, "rb") as f:
             try:
                 self.q = pickle.load(f)
+                print ('P3 Q-Table Size: %i' % len(self.q))
             except:
                 self.q = {}
 
@@ -45,10 +46,10 @@ class QLearn(object):
     def learnQ(self, state, action, reward, value):
         oldv = self.q.get((state, action), None)
         if oldv:
-            # print ("Update")
+            print ("Update")
             self.q[(state, action)] = oldv + self.alpha * (value - oldv)
         else:
-            # print ("New")
+            print ("New")
             self.q[(state, action)] = reward
 
 

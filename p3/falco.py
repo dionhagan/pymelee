@@ -9,7 +9,7 @@ import p3.pad
 from p3.state import ActionState
 
 class Falco:
-    def __init__(self, pad, player=3, enemy=1):
+    def __init__(self, pad, epsilon=0.75, player=3, enemy=1):
         self.player = player - 1
         self.enemy = enemy - 1
 
@@ -18,7 +18,7 @@ class Falco:
         self.action_list = []
         self.last_state = None
         self.last_action = None
-        self.ai = p3.qlearn.QLearn(actions=[], epsilon=0.90, alpha=0.65,
+        self.ai = p3.qlearn.QLearn(actions=[], epsilon=epsilon, alpha=0.65,
                                                gamma=0.9, player=player)
 
         # convert native commands to serializable strings
@@ -32,28 +32,23 @@ class Falco:
 
         # convert native commands to serializable strings
         self.move_string = {
-            #'pressZ': self.pressZ,
-            # 'stop': self.stop, 
-            # 'laser': self.laser, 
-            # 'shine': self.shine,
-            'shield': self.shield, 
-            # 'light_shield': self.light_shield,
+            # WORKING
+            'stop': self.stop,
+            'shield': self.shield,
+            'light_shield': self.light_shield,
 
-            # 'dash_left': self.dash_left, 'dash_right': self.dash_right,
-            # 'shorthop': self.shorthop, 'fullhop': self.fullhop, 'double_jump': self.double_jump,
-            # 'pressA': self.pressA, 'pressB': self.pressB, 'pressX': self.pressX, 'pressZ': self.pressZ,
-            # 'nair': self.nair, 'bair': self.bair, 'dair': self.dair, 'fair_left': self.fair_left, 'fair_right': self.fair_left,
-            # 'fsmash_left': self.fsmash_left, 'fsmash_right': self.fsmash_right,
-            # 'up_smash': self.up_smash, 'down_smash': self.down_smash,
-            # 'upB0': self.upB0, 'upB45': self.upB45, 'upB90': self.upB90, 'upB135': self.upB135,
-            # 'upB180': self.upB180, 'upB225': self.upB225, 'upB270': self.upB270, 'upB315': self.upB315,
-            # 'sideB_left': self.sideB_left, 'sideB_right': self.sideB_right,
-            # 'lcancel': self.lcancel
+            'pressZ': self.pressZ,
+
+            'neutralB': self.neutralB,'downB': self.downB,'upB': self.upB,
+            'sideB_left': self.sideB_left, 'sideB_right': self.sideB_right,
+
+            'nair': self.nair, 'dair': self.dair, 'fair': self.fair, 'bair': self.bair,
 
             # NOT WORKING
+            # 'pressA': self.pressA, 'pressB': self.pressB, 'pressX': self.pressX,
+            'fsmash_left': self.fsmash_left, 'fsmash_right': self.fsmash_right,
+            'up_smash': self.up_smash, 'down_smash': self.down_smash,
             # 'wavedash': self.wavedash,
-            #'shorthop_laser': self.shorthop_laser,
-            # 'shinespam': self.shinespam,
         }
 
     def generate_actions(self):
@@ -65,7 +60,8 @@ class Falco:
         actions.add((0, 'reset', None))
 
         # native input functions (used to pipe instructions)
-        inputs = []#['tilt_stick', 'press_trigger']
+        # inputs = list()
+        inputs = ['tilt_stick', 'press_button']#, 'press_trigger']
         inputs.extend(list(self.move_string.keys()))
 
         for _ in range(300):
@@ -104,6 +100,9 @@ class Falco:
             Calculate reward for current state and action,
             and update Q-table
         """
+        # set current
+        state.players[0].type = 0
+
         reward = -1
 
         # extract damage/stock state for p1 and p3
@@ -118,7 +117,7 @@ class Falco:
 
         # reward for percentage
         reward -= 5 * p3_damage # + 1 * p1_stocks
-        reward += 75 * p1_damage # + 1 * p3_stocks
+        reward += 500 * p1_damage # + 1 * p3_stocks
 
         # get players action states
         p3_action_state = state.players[self.player].action_state.value
@@ -127,7 +126,7 @@ class Falco:
         # penalty for p3_death
         if state.players[self.player].action_state.value <= 0xA:
             print("NOoO0o0oO0O!")
-            reward += -100
+            reward += -10000
 
         # reward for a kill
         if state.players[self.enemy].action_state.value <= 0xA:
@@ -137,20 +136,26 @@ class Falco:
         # reward for attacking
         if p3_action_state >= 0x2C and p3_action_state <= 0x45:
             print('Attacking!')
-            reward += 25
+            reward += 500
 
         # punish for falling/dying
         if p3_action_state >= 0x1D and p3_action_state <= 0x26:
             print('Falling!')
-            reward -= 100
+            reward -= 5000
 
         # punish for being below stage
         if state.players[self.player].pos_y < 0:
             print('BELOW')
-            reward -= state.players[self.player].pos_y
+            reward -= 100 * abs(state.players[self.player].pos_y)
+
+        # reward for being on the grounded
+        if state.players[self.player].on_ground:
+            print ("GROUNDED")
+            reward += 1000
 
         # reward for being center stage
-        reward -= (abs(state.players[self.player].pos_x))**2
+        # print ('X-Coord: %i' % state.players[self.player-2].pos_x)
+        reward -= abs(state.players[self.player].pos_x)
         print(reward)
 
         # update Q vals
@@ -222,7 +227,7 @@ class Falco:
         # self.action_list.append((0, pad.reset, []))
         self.action_list.append((wait, 'reset', None))
 
-    def shield(self, wait=30):
+    def shield(self, wait=240):
         self.action_list.append((wait, 'press_trigger', [p3.pad.Trigger.L, 1]))
         self.action_list.append((5, 'press_trigger', [p3.pad.Trigger.L, 0]))
 
@@ -236,13 +241,14 @@ class Falco:
 
     def pressA(self, x=0.5, y=0.5):
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, x, y]))
-        self.action_list.append((12, 'press_button', [p3.pad.Button.A]))
-        self.action_list.append((0, 'release_button', [p3.pad.Button.A]))
+        self.action_list.append((0, 'press_button', [p3.pad.Button.A]))
+        self.action_list.append((random.uniform(1, 60), 'release_button', [p3.pad.Button.A]))
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
 
     def pressB(self, x=0.5, y=0.5):
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, x, y]))
-        self.action_list.append((random.uniform(1, 12), 'press_button', [p3.pad.Button.B]))
+        # self.action_list.append((random.uniform(1, 12), 'press_button', [p3.pad.Button.B]))
+        self.action_list.append((6, 'press_button', [p3.pad.Button.B]))
         self.action_list.append((0, 'release_button', [p3.pad.Button.B]))
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
 
@@ -262,7 +268,7 @@ class Falco:
     def double_jump(self):
         self.fullhop(); self.fullhop()
 
-    def dash(self, x, wait=50):
+    def dash(self, x, wait=240):
         self.action_list.append((wait, 'tilt_stick', [p3.pad.Stick.MAIN, x, 0.5]))
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
 
@@ -272,49 +278,28 @@ class Falco:
     def dash_right(self):
         self.dash(x=1)
 
-    # RECOVERY
-    # def upB(self):
-    #     self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, x, y]))
-    #     self.action_list.append((0, 'press_button', [p3.pad.Button.B]))
-    #     self.action_list.append((3, 'release_button', [p3.pad.Button.B]))
-
-    def upB0(self):
-        self.pressB(x=1.0)
-
-    def upB45(self):
-        self.pressB(x=1.0, y=1.0)
-
-    def upB90(self):
-        self.pressB(y=1.0)
-
-    def upB135(self):
-        self.pressB(x=0.0, y=1.0)
-
-    def upB180(self):
-        self.pressB(x=0.0)
-
-    def upB225(self):
-        self.pressB(x=0.0, y=0.0)
-
-    def upB270(self):
-        self.pressB(y=0)
-
-    def upB315(self):
-        self.pressB(x=1.0, y=0.0)
-
-    def sideB_left(self):
-        self.pressB(x=0)
-
-    def sideB_right(self):
-        self.pressB(x=1)
-
     # SPECIALS
-    def laser(self):
+    def neutralB(self):
         self.action_list.append((0, 'press_button', [p3.pad.Button.B]))
         self.action_list.append((1, 'release_button', [p3.pad.Button.B]))
         self.stop(30)
 
-    def shine(self):
+    def upB(self):
+        self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 1]))
+        self.action_list.append((0, 'press_button', [p3.pad.Button.B]))
+        self.action_list.append((10, 'release_button', [p3.pad.Button.B]))
+
+    def sideB_left(self):
+        self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 0.0, 0.5]))
+        self.action_list.append((0, 'press_button', [p3.pad.Button.B]))
+        self.action_list.append((10, 'release_button', [p3.pad.Button.B]))
+
+    def sideB_right(self):
+        self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 1.0, 0.5]))
+        self.action_list.append((0, 'press_button', [p3.pad.Button.B]))
+        self.action_list.append((10, 'release_button', [p3.pad.Button.B]))
+
+    def downB(self):
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.0]))
         self.action_list.append((0, 'press_button', [p3.pad.Button.B]))
         self.action_list.append((1, 'release_button', [p3.pad.Button.B]))
@@ -323,7 +308,7 @@ class Falco:
     # SMASH ATTACKS
     def fsmash(self, x):
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.C, x, 0.5]))
-        self.action_list.append((1, 'tilt_stick', [p3.pad.Stick.C, 0.5, 0.5]))
+        self.action_list.append((7, 'tilt_stick', [p3.pad.Stick.C, 0.5, 0.5]))
 
     def fsmash_left(self):
         self.fsmash(x=0)
@@ -341,34 +326,46 @@ class Falco:
 
     # AERIALS
     def nair(self):
-        self.shorthop()
-        self.pressA()
-        self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0]))
-        self.action_list.append((2, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+        self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 1.0]))
+        self.action_list.append((5, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+        self.action_list.append((0, 'press_button', [p3.pad.Button.A]))
 
-    def fair_right(self):
-        self.shorthop()
-        self.pressA(x=1)
-        self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0]))
-        self.action_list.append((2, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
-
-    def fair_left(self):
-        self.shorthop()
-        self.pressA(x=0)
-        self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0]))
-        self.action_list.append((2, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+    def fair(self):
+        if self.last_state:
+            if self.last_state.players[2].facing == 1.0:
+                self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 1.0]))
+                self.action_list.append((5, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+                self.action_list.append((0, 'press_button', [p3.pad.Button.A]))
+                self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 1.0, 0]))
+                self.action_list.append((2, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+            else:
+                self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 1.0]))
+                self.action_list.append((5, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+                self.action_list.append((0, 'press_button', [p3.pad.Button.A]))
+                self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.0, 0]))
+                self.action_list.append((2, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
 
     def dair(self):
-        self.shorthop()
-        self.pressA(y=0)
+        self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 1.0]))
+        self.action_list.append((5, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+        self.action_list.append((0, 'press_button', [p3.pad.Button.A]))
         self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0]))
-        self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+        self.action_list.append((2, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
 
     def bair(self):
-        self.shorthop()
-        self.pressA(x=0)
-        self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0]))
-        self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+        if self.last_state:
+            if self.last_state.players[2].facing == 1.0:
+                self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 1.0]))
+                self.action_list.append((5, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+                self.action_list.append((0, 'press_button', [p3.pad.Button.A]))
+                self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 0.0, 0]))
+                self.action_list.append((2, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+            else:
+                self.action_list.append((6, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 1.0]))
+                self.action_list.append((5, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
+                self.action_list.append((0, 'press_button', [p3.pad.Button.A]))
+                self.action_list.append((0, 'tilt_stick', [p3.pad.Stick.MAIN, 1.0, 0]))
+                self.action_list.append((2, 'tilt_stick', [p3.pad.Stick.MAIN, 0.5, 0.5]))
 
 
     # TECH
