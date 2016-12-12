@@ -18,7 +18,7 @@ class Falco:
         self.action_list = []
         self.last_state = None
         self.last_action = None
-        self.ai = p3.qlearn.QLearn(actions=[], epsilon=epsilon, alpha=0.65,
+        self.ai = p3.qlearn.QLearn(actions=[], epsilon=epsilon, alpha=0.5,
                                                gamma=0.9, player=player)
 
         # convert native commands to serializable strings
