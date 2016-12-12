@@ -95,14 +95,7 @@ class Falco:
         # print(len(actions))
         return list(actions)
 
-    def update(self, state):
-        """
-            Calculate reward for current state and action,
-            and update Q-table
-        """
-        # set current
-        state.players[0].type = 0
-
+    def get_reward(self, state):
         reward = -1
 
         # extract damage/stock state for p1 and p3
@@ -158,6 +151,16 @@ class Falco:
         reward -= abs(state.players[self.player].pos_x)
         print(reward)
 
+    def update(self, state):
+        """
+            Calculate reward for current state and action,
+            and update Q-table
+        """
+        # set current
+        state.players[0].type = 0
+
+        reward = self.get_reward(state)
+
         # update Q vals
         if self.last_state:
             self.ai.learn(self.last_state, self.last_action, reward, state)
@@ -174,7 +177,6 @@ class Falco:
         # record last state-action pair
         self.last_state = state
         self.last_action = action
-
 
     def advance(self, state):
         while self.action_list and self.ai.actions:
@@ -211,7 +213,6 @@ class Falco:
             self.ai.actions = self.generate_actions()
             self.update(state)
 
-    # extracts
     def reward_state(self, state, player):
         damage = state.players[self.player].percent
         stocks = state.players[self.player].stocks
