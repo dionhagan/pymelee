@@ -3,7 +3,9 @@ import time
 
 import p3.pad
 
+
 class MenuManager:
+
     def __init__(self):
         self.selected_cpu = False
 
@@ -37,7 +39,8 @@ class MenuManager:
                 pad.press_button(p3.pad.Button.A)
                 self.selected_cpu = True
             else:
-                pad.tilt_stick(p3.pad.Stick.MAIN, 0.5 * (dx / mag) + 0.5, 0.5 * (dy / mag) + 0.5)
+                pad.tilt_stick(p3.pad.Stick.MAIN, 0.5 *
+                               (dx / mag) + 0.5, 0.5 * (dy / mag) + 0.5)
 
     def pick_fd(self, state, pad):
         # Go to final destination and press A

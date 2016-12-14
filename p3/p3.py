@@ -24,6 +24,7 @@ def find_dolphin_dir():
             return path
     return None
 
+
 def write_locations(dolphin_dir, locations):
     """Writes out the locations list to the appropriate place under dolphin_dir."""
     path = dolphin_dir + '/MemoryWatcher/Locations.txt'
@@ -34,6 +35,7 @@ def write_locations(dolphin_dir, locations):
         if dolphin_dir is None:
             print('Could not detect dolphin directory.')
             return
+
 
 def run(cpu, state, sm, mw, pad, stats):
     mm = p3.menu_manager.MenuManager()
@@ -47,6 +49,7 @@ def run(cpu, state, sm, mw, pad, stats):
             start = time.time()
             make_action(state, pad, mm, cpu)
             stats.add_thinking_time(time.time() - start)
+
 
 def make_action(state, pad, mm, cpu):
     if state.menu == p3.state.Menu.Game:
@@ -62,6 +65,7 @@ def make_action(state, pad, mm, cpu):
         cpu.pad.reset()
         mm.press_start_lots(state, pad)
 
+
 def main():
     dolphin_dir = find_dolphin_dir()
     if dolphin_dir is None:
@@ -75,11 +79,13 @@ def main():
     stats = p3.stats.Stats()
 
     try:
-        # open Dolphin via CLI - comment out system call and add your own directory
+        # open Dolphin via CLI - comment out system call and add your own
+        # directory
         print('Starting dolphin now. Press ^C to stop p3.')
-        os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")#% sys.argv[1])
-        # os.system("open ~/Downloads/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a /Applications/Dolphin.app/")#% sys.argv[1])
-
+        # % sys.argv[1])
+        os.system("open /Volumes/Seagate\ Backup\ Plus\ Drive/Games/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso -a ~/Desktop/Dolphin.app/")
+        # os.system("open ~/Downloads/Super\ Smash\ Bros.\ Melee\ \(v1.02\).iso
+        # -a /Applications/Dolphin.app/")#% sys.argv[1])
 
         # configure paths
         # p2_pad_path = dolphin_dir + '/Pipes/pipe2'
